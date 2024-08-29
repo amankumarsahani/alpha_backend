@@ -18,7 +18,7 @@ const uploadCSV = async (req, res) => {
       .on('end', async () => {
         // Insert each record from the CSV into the database
         for (const recipient of results) {
-          await db.query('INSERT INTO email_recipients (CompanyID, Email, FirstName, LastName) VALUES (?, ?, ?, ?)', [
+          await db.query('INSERT INTO emailrecipients (CompanyID, Email, FirstName, LastName) VALUES (?, ?, ?, ?)', [
             req.body.CompanyID,
             recipient.Email,
             recipient.FirstName,
@@ -35,10 +35,18 @@ const uploadCSV = async (req, res) => {
   }
 };
 
-// Example function to get campaigns (replace with actual logic)
 const getCampaigns = async (req, res) => {
   try {
-    const campaigns = await db.query('SELECT * FROM campaigns WHERE CompanyID = ?', [req.body.CompanyID]);
+    const { limit } = req.query;
+    
+    if( req.user == undefined) {
+      res.status(401).json({ error: 'User not found' });
+    }
+    
+    const userId = req?.user?.id;
+    const query = `SELECT * FROM campaigns WHERE UserID = ? ORDER BY created_at DESC LIMIT ?`;
+    const campaigns = await db.query(query, [userId, parseInt(limit, 10)]);
+
     res.status(200).json(campaigns);
   } catch (error) {
     res.status(500).json({ error: error.message });

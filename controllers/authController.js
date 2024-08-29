@@ -4,6 +4,21 @@ const jwt = require('jsonwebtoken');
 
 const registerUser = async (req, res) => {
   const { username, email, password, companyName } = req.body;
+
+  // Validate input fields
+  if (!username) {
+    return res.status(400).json({ message: 'Username is required' });
+  }
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+  if (!password) {
+    return res.status(400).json({ message: 'Password is required' });
+  }
+  if (!companyName) {
+    return res.status(400).json({ message: 'Company name is required' });
+  }
+
   try {
     // Check if user already exists
     const [user] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
