@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const campaignRoutes = require('./routes/campaigns');
 const authRoutes = require('./routes/auth');
+const customersRoutes = require('./routes/customer');
 const app = express();
 
 app.use(cors());
@@ -10,6 +11,7 @@ app.use(bodyParser.json());
 
 app.use('/api/campaigns', campaignRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/customers', customersRoutes);
 
 app.get('/download-template', (req, res) => {
     res.download(path.join(__dirname, 'public', 'template.csv'));
