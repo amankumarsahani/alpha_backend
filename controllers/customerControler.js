@@ -1,35 +1,73 @@
 const db = require('../config/db');
 
-const getData = async (tableName, columns) => {
-    try {
-        let query;
+const getData = (tableName, columns) => {
+    return new Promise((resolve, reject) => {
+        try {
+            let query;
+            
+            if (columns && columns.length > 0) {
+                const columnsList = columns.join(', ');
+                query = `SELECT ${columnsList} FROM ??`;
+            } else {
+                query = `SELECT * FROM ??`;
+            }
 
-        if (columns && columns.length > 0) {
-            const columnsList = columns.join(', ');  // Join columns array into a comma-separated string
-            query = `SELECT ${columnsList} FROM ??`;
-        } else {
-            query = `SELECT * FROM ??`;  // Fetch all columns if columns array is empty or not provided
+            db.query(query, [tableName], (err, rows) => {
+                if (err) {
+                    console.error('Error fetching data from the table:', err);
+                    return reject({
+                        success: false,
+                        message: 'Error fetching data',
+                        error: err.message
+                    });
+                }
+                return resolve({
+                    success: true,
+                    data: rows
+                });
+            });
+        } catch (error) {
+            console.error('Server error:', error);
+            return reject({
+                success: false,
+                message: 'Server error occurred',
+                error: error.message
+            });
         }
-        // Execute the query using parameterized table name (to avoid SQL injection)
-        const [rows] = await db.promise().query(query, [tableName]);
-
-        return rows; // Return the result rows from the query
-    } catch (err) {
-        console.error('Error fetching data from the table:', err);
-        throw new Error('Error fetching data');
-    }
+    });
 };
 
-const addCustomerData = (req,res)=>{
-    const { firstName, lastName, email, phone } = req.body;
-    const query = 'INSERT INTO customers (firstName, lastName, email, phone) VALUES (?, ?, ?, ?)';
-    db.query(query, [firstName, lastName, email, phone], (err, result) => {
-        if (err) {
-            return res.status(500).json({ message: 'Error adding customer' });
-        }
-        res.status(200).json({ message: 'Customer added successfully' });
-    });
-}
+const addCustomerData = (req, res) => {
+    try {
+        const { firstName, lastName, email, phone } = req.body;
+        const query = 'INSERT INTO customers (firstName, lastName, email, phone) VALUES (?, ?, ?, ?)';
+        
+        db.query(query, [firstName, lastName, email, phone], (err, result) => {
+            console.log("hihihhi", result, err);
+            
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({ 
+                    success: false,
+                    message: 'Error adding customer',
+                    error: err.message 
+                });
+            }
+        });
+        return res.status(200).json({ 
+            success: true,
+            message: 'Customer added successfully',
+            data: result 
+        });
+    } catch (error) {
+        console.error('Server error:', error);
+        return res.status(500).json({ 
+            success: false,
+            message: 'Server error occurred',
+            error: error.message 
+        });
+    }
+};
 
 const addCustomerCsv = (req, res) => {
     const customers = req.body.customers;
@@ -45,11 +83,22 @@ const addCustomerCsv = (req, res) => {
 
 const getCustomers = async (req, res) => {    
     try {
-        const customers = await getData('customers', []);        
-        res.status(200).json(customers);
-    } catch (err) {
-        console.error('Error fetching customers', err);
-        res.status(500).json({ message: 'Error fetching customers' });
+        const result = await getData('customers', []);
+        if (!result.success) {
+            return res.status(500).json(result);
+        }
+        return res.status(200).json({
+            success: true,
+            message: 'Customers fetched successfully',
+            data: result.data
+        });
+    } catch (error) {
+        console.error('Error fetching customers:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error fetching customers',
+            error: error.message || error
+        });
     }
 };
 
