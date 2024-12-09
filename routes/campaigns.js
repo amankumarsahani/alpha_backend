@@ -1,10 +1,21 @@
 const express = require('express');
-const { getCampaigns, uploadCSV } = require('../controllers/campaignController');
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' });
 const router = express.Router();
+const { 
+    createCampaign, 
+    addRecipientsToCampaign, 
+    sendCampaign, 
+    getCampaignStats,
+    exportCampaignData,
+    exportCampaignStats
+} = require('../controllers/campaignController');
 
-router.get('/', getCampaigns);
-router.post('/upload', upload.single('file'), uploadCSV);
+router.post('/create', createCampaign);
+router.post('/recipients', addRecipientsToCampaign);
+router.post('/send/:campaignId', sendCampaign);
+router.get('/stats/:campaignId', getCampaignStats);
+
+// Export routes
+router.get('/export/:campaignId', exportCampaignData);
+router.get('/export-stats/:campaignId', exportCampaignStats);
 
 module.exports = router;
